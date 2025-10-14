@@ -166,7 +166,7 @@ def restart_game():
     game_started = False
     runda = 0
     # NIE czyścimy players — jeśli chcesz czyścić, odkomentuj poniżej:
-    # players.clear()
+    players.clear()
     print("[RESET] Gra zresetowana")
     socketio.emit("clear", {})
     socketio.emit("timer", {"time": ""})
@@ -175,3 +175,4 @@ def restart_game():
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+
