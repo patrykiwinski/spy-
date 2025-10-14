@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Who’s the Gekon? – Mobilna wersja</title>
+  <link rel="stylesheet" href="/static/mobi.css" />
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Who’s the Gekon?</h1>
+
+    <div id="status">Oczekiwanie...</div>
+    <div id="role"></div>
+    <div id="timer"></div>
+
+    <div class="btn-grid">
+      <button id="joinBtn" class="game-btn orange">Dołącz do gry</button>
+      <button id="startBtn" class="game-btn blue">Start gry</button>
+      <button id="restartBtn" class="game-btn red">Restart/Koniec</button>
+      <button id="nextBtn" class="game-btn green">Następna runda</button>
+    </div>
+
+    <div class="big-btn">
+      <button id="stopBtn" class="stop-button">DUŻY PRZYCISK</button>
+    </div>
+  </div>
+
+  <script>
+
+ 
+    const socket = io();
+    let myId = "";
+// ---- POKAZYWANIE / CHOWANIE PRZYCISKÓW ----
+function showBeforeStart() {
+    document.getElementById("joinBtn").style.display    = "inline-block";
+    document.getElementById("startBtn").style.display   = "inline-block";
+    document.getElementById("restartBtn").style.display = "inline-block";
+    document.getElementById("nextBtn").style.display    = "none";
+    document.getElementById("stopBtn").style.display    = "none";
+  }
+
+  function showAfterStart() {
+    document.getElementById("joinBtn").style.display    = "none";
+    document.getElementById("startBtn").style.display   = "none";
+    document.getElementById("restartBtn").style.display = "inline-block"; // jeśli chcesz ukryć, zmień na "none"
+    document.getElementById("nextBtn").style.display    = "inline-block";
+    document.getElementById("stopBtn").style.display    = "inline-block";
+  }
+
+  // startowy układ
+  showBeforeStart();
+
+  // ---- HANDLERY KLIKÓW ----
+  document.getElementById("joinBtn").onclick = () => {
+    const name = prompt("Podaj swoje imię:");
+    if (!name || name.trim() === "") return alert("Musisz wpisać imię!");
+    myId = name.trim();
+    socket.emit("join", { id: myId });
+  };
+
+  document.getElementById("startBtn").onclick = () => {
+    socket.emit("start");
+    // układ przełączy się po komunikacie z serwera (patrz niżej)
+  };
+
+  document.getElementById("nextBtn").onclick = () => {
+    socket.emit("next_round");
+  };
+
+  document.getElementById("restartBtn").onclick = () => {
+    socket.emit("restart");
+    // układ przełączy się po "clear"/"Gra zresetowana"
+  };
+
+  document.getElementById("stopBtn").onclick = () => {
+    if (!myId) return alert("Najpierw dołącz do gry!");
+    socket.emit("pause", { id: myId });
+  };
+
+  // ---- ODBIÓR ZDARZEŃ Z SERWERA ----
+  socket.on("joined", data => {
+    document.getElementById("status").innerText = data.msg;
+  });
+
+  socket.on("info", data => {
+    const msg = data.msg || "";
+    document.getElementById("status").innerText = msg;
+
+    // Przełącz układ na podstawie komunikatów
+    if (msg.startsWith("Gra rozpoczęta!")) {
+      showAfterStart();
+    } else if (msg.startsWith("Nowa runda!")) {
+      showAfterStart();
+    } else if (msg.toLowerCase().includes("zresetowana")) {
+      showBeforeStart();
+    }
+  });
+
+  socket.on("error", data => {
+    alert(data.msg);
+  });
+
+  socket.on("role", data => {
+    const { category, secret, runda } = data;
+    if (secret) {
+      document.getElementById("role").innerText =
+        `Runda ${runda}\n✅ Gracz\nKategoria: ${category}\nHasło: ${secret}`;
+    } else {
+      document.getElementById("role").innerText =
+        `Runda ${runda}\n🕵️‍♂️ SZPIEG\nKategoria: ${category}`;
+    }
+    // na wszelki wypadek (gdyby info przyszło później)
+    showAfterStart();
+  });
+
+  socket.on("timer", data => {
+    const t = data.time;
+    document.getElementById("timer").innerText = (t === "" || t == null) ? "" : `⏳ ${t}s`;
+  });
+
+  socket.on("paused", data => {
+    document.getElementById("status").innerText =(data.msg || "");
+  });
+
+  socket.on("clear", () => {
+    document.getElementById("role").innerText = "";
+    document.getElementById("timer").innerText = "";
+    document.getElementById("status").innerText = "Oczekiwanie...";
+    showBeforeStart();
+
+  
+  });
+
+
+
+socket.on("boom", data => {
+
+  if (navigator.vibrate)
+   navigator.vibrate(900/2)
+ document.body.classList.add("boomFX");
+  setTimeout(() => {
+    document.body.classList.remove("boomFX");
+  }, 3000); // wraca do normalnego
+})
+socket.on("end", data => {
+
+  if (navigator.vibrate)
+   navigator.vibrate(900/2)
+ document.body.classList.add("end");
+  setTimeout(() => {
+    document.body.classList.remove("end");
+  }, 300);
+})
+</script>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Who’s the Gekon? – Mobilna wersja</title>
+  <link rel="stylesheet" href="/static/mobi.css">
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Who’s the Gekon?</h1>
+    <div id="status">Oczekiwanie...</div>
+    <div id="role"></div>
+    <div id="timer"></div>
+
+    <div class="btn-grid">
+      <button id="joinBtn" class="game-btn orange">Dołącz do gry</button>
+      <button id="startBtn" class="game-btn blue">Start gry</button>
+      <button id="restartBtn" class="game-btn red">Restart/Koniec</button>
+      <button id="nextBtn" class="game-btn green">Następna runda</button>
+    </div>
+    <div class="big-btn">
+      <button id="stopBtn" class="stop-button">DUŻY PRZYCISK</button>
+    </div>
+  </div>
+
+<script>
+const socket = io();
+let myId = "";
+
+// --- FUNKCJE DO ZMIANY UKŁADU ---
+function showBeforeStart() {
+  document.getElementById("joinBtn").style.display = "inline-block";
+  document.getElementById("startBtn").style.display = "inline-block";
+  document.getElementById("restartBtn").style.display = "inline-block";
+  document.getElementById("nextBtn").style.display = "none";
+  document.getElementById("stopBtn").style.display = "none";
+}
+
+function showAfterStart() {
+  document.getElementById("joinBtn").style.display = "none";
+  document.getElementById("startBtn").style.display = "none";
+  document.getElementById("restartBtn").style.display = "inline-block";
+  document.getElementById("nextBtn").style.display = "inline-block";
+  document.getElementById("stopBtn").style.display = "inline-block";
+}
+
+// początkowy układ
+showBeforeStart();
+
+// --- LOGIKA PRZYCISKÓW ---
+// dołączenie gracza
+document.getElementById("joinBtn").onclick = () => {
+  const name = prompt("Podaj swoje imię:");
+  if (!name || name.trim() === "") {
+    alert("Musisz wpisać imię!");
+    return;
+  }
+  myId = name.trim();
+  socket.emit("join", {id: myId});
+};
+
+socket.on("joined", data => {
+  document.getElementById("status").innerText = data.msg;
+});
+
+// start gry
+document.getElementById("startBtn").onclick = () => {
+  socket.emit("start");
+};
+socket.on("game_started", () => {
+  showAfterStart();
+});
+
+// restart
+document.getElementById("restartBtn").onclick = () => {
+  socket.emit("restart");
+  showBeforeStart();
+};
+
+// nowa runda
+document.getElementById("nextBtn").onclick = () => {
+  socket.emit("next_round");
+};
+
+// DUŻY PRZYCISK (pauza)
+document.getElementById("stopBtn").onclick = () => {
+  if (!myId) {
+    alert("Najpierw dołącz do gry!");
+    return;
+  }
+  socket.emit("pause", {id: myId});
+};
+
+socket.on("paused", data => {
+  document.getElementById("status").innerText = "⏸️ " + data.name;
+});
+
+socket.on("role", data => {
+  if (data.secret) {
+    document.getElementById("role").innerText =
+      "✅ Gracz\nKategoria: " + data.category + "\nHasło: " + data.secret;
+  } else {
+    document.getElementById("role").innerText =
+      "🕵️‍♂️ IMPOSTOR\nKategoria: " + data.category;
+  }
+});
+
+
+// --- TIMER ---
+socket.on("timer", data => {
+  if (data.time === "") {
+    document.getElementById("timer").innerText = "";
+  } else {
+    document.getElementById("timer").innerText = "⏳ " + data.time + "s";
+  }
+});
+</script>
+</body>
+</html>

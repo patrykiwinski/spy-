@@ -1,0 +1,77 @@
+/* Całość na środku */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Nagłówek */
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Status */
+#status {
+    margin: 10px 0 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #555;
+}
+
+/* Przyciski */
+button {
+    display: block;
+    width: 90%;
+    max-width: 300px;
+    padding: 15px;
+    margin: 10px auto;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 12px;
+    border: none;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Pole z rolą */
+#role {
+    margin-top: 30px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #222;
+    white-space: pre-line;
+
+    /* To wycentruje zawartość */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Ikona */
+.role-icon {
+    font-size: 60px;
+    margin-bottom: 15px;
+}
+
+#timer {
+    margin-top: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ff0800; /* czerwony */
+}
