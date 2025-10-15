@@ -1,0 +1,122 @@
+{
+  "Zwierzęta": [
+    "Gekon",
+    "Kot",
+    "Pies",
+    "Żaba",
+    "Tygrys",
+    "Słoń",
+    "Lis",
+    "Orzeł",
+    "Rekin",
+    "Pingwin"
+  ],
+  "Przedmioty": [
+    "Krzesło",
+    "Telefon",
+    "Komputer",
+    "Piłka",
+    "Zegarek",
+    "Książka",
+    "Latarka",
+    "Słuchawki",
+    "Nożyczki",
+    "Plecak"
+  ],
+  "Osoby": [
+    "Lewandowski",
+    "Einstein",
+    "Messi",
+    "Obama",
+    "Kopernik",
+    "Adele",
+    "Mickiewicz",
+    "Taylor Swift",
+    "Iga Świątek",
+    "Keanu Reeves"
+  ],
+  "Państwa": [
+    "Polska",
+    "Niemcy",
+    "Francja",
+    "USA",
+    "Hiszpania",
+    "Włochy",
+    "Japonia",
+    "Australia",
+    "Egipt",
+    "Brazylia"
+  ],
+  "Miasta": [
+    "Warszawa",
+    "Berlin",
+    "Paryż",
+    "Londyn",
+    "Rzym",
+    "Madryt",
+    "Tokio",
+    "Nowy Jork",
+    "Sydney",
+    "Kraków"
+  ],
+  "Jedzenie": [
+    "Pizza",
+    "Sushi",
+    "Pierogi",
+    "Burger",
+    "Sałatka",
+    "Tiramisu",
+    "Ramen",
+    "Taco",
+    "Schabowy",
+    "Lody"
+  ],
+  "Sporty": [
+    "Piłka nożna",
+    "Koszykówka",
+    "Siatkówka",
+    "Tenis",
+    "Boks",
+    "Pływanie",
+    "Narciarstwo",
+    "Szachy",
+    "Lekkoatletyka",
+    "Formuła 1"
+  ],
+  "Zawody": [
+    "Lekarz",
+    "Nauczyciel",
+    "Programista",
+    "Strażak",
+    "Policjant",
+    "Piekarz",
+    "Kierowca",
+    "Architekt",
+    "Prawnik",
+    "Mechanik"
+  ],
+  "Filmy": [
+    "Matrix",
+    "Avatar",
+    "Incepcja",
+    "Gladiator",
+    "Shrek",
+    "Titanic",
+    "Forrest Gump",
+    "Joker",
+    "Interstellar",
+    "Skazani na Shawshank"
+  ],
+  "Muzyka": [
+    "Rock",
+    "Pop",
+    "Jazz",
+    "Hip-hop",
+    "Metal",
+    "Klasyczna",
+    "Elektronika",
+    "Disco Polo",
+    "Reggae",
+    "Blues"
+  ]
+}
