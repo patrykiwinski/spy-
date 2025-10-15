@@ -1,4 +1,4 @@
-import threading, time, random
+import threading, time, random, json
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 
@@ -13,13 +13,11 @@ game_started = False
 stop_flag = False
 timer_thread = None
 
-CATEGORIES = {
-    "Zwierzęta": ["Gekon", "Kot", "Pies", "Żaba", "Tygrys"],
-    "Przedmioty": ["Krzesło", "Telefon", "Komputer", "Piłka"],
-    "Osoby": ["Lewandowski", "Einstein", "Messi", "Obama"],
-    "Państwa": ["Polska", "Niemcy", "Francja", "USA", "Hiszpania"],
-    "Miasta": ["Warszawa", "Berlin", "Paryż", "Londyn", "Rzym"]
-}
+BASE_DIR = Path(__file__).resolve().parent
+CATEGORIES_PATH = BASE_DIR / "categories.json"
+
+with CATEGORIES_PATH.open(encoding="utf-8") as f:
+    CATEGORIES = json.load(f)
 
 # ---------------- TIMER ----------------
 def run_timer(seconds=TIMER_SECONDS):
@@ -175,4 +173,5 @@ def restart_game():
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+
 
