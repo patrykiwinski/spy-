@@ -6,15 +6,20 @@ html, body {
   background: #121212;
   color: #fff;
   text-align: center;
+  overflow-x: hidden;
 }
 
+/* Główny kontener */
 .container {
+  position: relative;            /* pozycjonowanie pickera względem kontenera */
   width: 98vw;
   height: 100vh;
   max-width: 500px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-bottom: 140px;         /* MIEJSCE na picker na dole */
+  box-sizing: border-box;
 }
 
 /* Nagłówek */
@@ -29,34 +34,6 @@ h1 {
   margin-bottom: 4vh;
   font-size: 6vw;
 }
-
-/* Przyciski */
-.game-btn {
-  width: 85%;
-  max-width: 400px;
-  height: 90px;
-  margin: 1.5vh 0;
-  font-size: 6vw;
-  font-weight: bold;
-  border: none;
-  border-radius: 15px;
-  color: white;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-/* Kolory */
-.orange { background: #ff9800; }
-.orange:active { background: #e68900; }
-
-.blue { background: #2196f3; }
-.blue:active { background: #1976d2; }
-
-.red { background: #d13bff; color:#222; } /* żółty przycisk (twoja klasa 'red') */
-.red:active { background: #d13bff; }
-
-.green { background: #4caf50; }
-.green:active { background: #388e3c; }
 
 /* Rola */
 #role {
@@ -80,7 +57,7 @@ h1 {
   display: none;
 }
 
-/* Siatka 2x2 */
+/* Siatka 2x2 (przyciski) */
 .btn-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -90,16 +67,42 @@ h1 {
   margin-top: 20px;
 }
 
-.btn-grid .game-btn {
+.game-btn {
   width: 100%;
   height: 80px;
   font-size: 5vw;
-  border-radius: 12px;
   font-weight: bold;
-  color: white;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
   cursor: pointer;
+  transition: 0.2s;
 }
 
+/* Kolory przycisków */
+.orange { background: #ff9800; }
+.orange:active { background: #e68900; }
+
+.blue { background: #2196f3; }
+.blue:active { background: #1976d2; }
+
+/* U CIEBIE 'red' to faktycznie fiolet — zostawiam jak było */
+.red { background: #d13bff; }
+.red:active { background: #c20cff; }
+
+.green { background: #4caf50; }
+.green:active { background: #388e3c; }
+.deepb { background: #360b6d; }
+.deepk { background: #5b1baf;
+width: 70%;
+  height: 60px;
+  font-size: 2vw;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.2s; }
 /* Duży przycisk */
 .stop-button {
   margin-top: 11vh;
@@ -109,27 +112,72 @@ h1 {
   font-size: 7vw;
   font-weight: bold;
   background: #ff4444;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 15px;
   cursor: pointer;
   transition: 0.2s;
 }
 
-/* ===== FX: OSTRA GWIAZDA (bez blur) ===== */
+
+/* ===== FX ===== */
 html.boomFX, body.boomFX {
-  background: #ff0000;           /* kolor „boom” */
+  background: #ff0000;
   transition: background 0.5s ease;
 }
 
 html.end, body.end {
-  background: #ffffff;           /* kolor „boom” */
+  background: #ffffff;
   transition: background 0.5s ease;
 }
 
+/* ===== Picker kategorii – NA DOLE KONTENERA ===== */
+.cat-picker {
+  
+  position: absolute;                    /* w obrębie .container */
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(0,0,0,0.25);
+  padding: 8px 10px;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  max-width: 92vw;
+  box-sizing: border-box;
+}
 
+.cat-picker label {
+  font-size: 12px;
+  opacity: .85;
+  white-space: nowrap;
+}
 
+.cat-picker select {
+  min-width: 200px;
+  min-height: 110px;      /* wysokość listy dla multiple */
+  font-size: 14px;        /* 16px na iOS powoduje mniejszy auto-zoom, 14px ok dla Android/desktop */
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+}
 
+.cat-picker select[multiple] {
+  min-width: 200px;
+  min-height: 110px;
+}
 
+/* Klasa do chowania pickera po starcie */
+.hidden { display: none !important; }
 
-
+#catList{
+  color: #00e49c;
+  font-weight: bold;
+}
+#catPicker{
+  background-color: #222222;
+}
