@@ -9,8 +9,10 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
+  <div id="hostInfo" class="host-info"> Host: —</div>
   <div class="container">
     <h1>Who’s the Gekon?</h1>
+    
 
     <div id="status">Oczekiwanie...</div>
     <div id="role"></div>
@@ -26,13 +28,86 @@
     <div class="big-btn">
       <button id="stopBtn" class="stop-button">DUŻY PRZYCISK</button>
     </div>
-  </div>
+    
+
+<!-- PICKER NA DOLE KONTENERA -->
+<div id="catPicker" class="cat-picker">
+  <label for="timerSec">Czas:</label>
+  <input id="timerSec" type="number" min="5" max="900" step="5" value="30" class="timer-input">
+  <button id="applyTimer" class="game-btn deepb">OK</button>
+
+  <button id="toggleCats" class="game-btn deepk">Kategorie </button>
+  <div id="catList" class="cat-list hidden">
+  {% for c in categories %}
+    <label><input type="checkbox" name="catOpt" value="{{ c }}" checked> {{ c }}</label><br>
+  {% endfor %}
+</div>
+</div>
+
+
+
+</body>
+
 
   <script>
 
  
     const socket = io();
+    document.addEventListener("DOMContentLoaded", () => {
+  const toggleBtn = document.getElementById("toggleCats");
+  const catList   = document.getElementById("catList");
+  if (toggleBtn && catList) {
+    toggleBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      catList.classList.toggle("hidden");
+    });
+  }
+});
     let myId = "";
+    let chosenCats = [];
+const $ = id => document.getElementById(id);
+function getSelectedCats(){
+  return Array.from(document.querySelectorAll('input[name="catOpt"]:checked'))
+              .map(el => el.value);
+}
+document.getElementById("applyTimer").onclick = () => {
+  const v = parseInt(document.getElementById("timerSec").value, 10);
+  socket.emit("set_timer", { seconds: v }, (ack) => {
+    console.log("[ACK] set_timer:", ack);
+  });
+};
+
+
+
+
+
+
+function applyCategorySelection(list, labelText) {
+  const set = new Set(list || []);
+  document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
+    cb.checked = set.has(cb.value);
+  });
+
+
+  // pokaż w statusie
+  document.getElementById("status").textContent = `Kategoria: ${labelText || (list && list.join(", ")) || "Losowa"}`;
+}
+document.getElementById("catPicker").addEventListener("change", (e) => {
+  if (e.target && e.target.name === "catOpt") {
+    const cats = Array.from(document.querySelectorAll('input[name="catOpt"]:checked'))
+                      .map(el => el.value);
+    console.log('[UI] wybór kategorii ->', cats);
+    // wyślij + oczekuj ACK z serwera
+    socket.emit("set_category", { categories: cats }, (ack) => {
+      console.log('[ACK] set_category:', ack);
+    });
+  }
+});
+
+
+
+
 // ---- POKAZYWANIE / CHOWANIE PRZYCISKÓW ----
 function showBeforeStart() {
     document.getElementById("joinBtn").style.display    = "inline-block";
@@ -40,6 +115,10 @@ function showBeforeStart() {
     document.getElementById("restartBtn").style.display = "inline-block";
     document.getElementById("nextBtn").style.display    = "none";
     document.getElementById("stopBtn").style.display    = "none";
+    $("catPicker").classList.remove("hidden");
+    const catList = document.getElementById("catList");
+  if (catList) catList.classList.add("hidden"); 
+
   }
 
   function showAfterStart() {
@@ -48,6 +127,9 @@ function showBeforeStart() {
     document.getElementById("restartBtn").style.display = "inline-block"; // jeśli chcesz ukryć, zmień na "none"
     document.getElementById("nextBtn").style.display    = "inline-block";
     document.getElementById("stopBtn").style.display    = "inline-block";
+    $("catPicker").classList.add("hidden");
+    const catList = document.getElementById("catList");
+  if (catList) catList.classList.add("hidden"); 
   }
 
   // startowy układ
@@ -61,10 +143,11 @@ function showBeforeStart() {
     socket.emit("join", { id: myId });
   };
 
-  document.getElementById("startBtn").onclick = () => {
-    socket.emit("start");
-    // układ przełączy się po komunikacie z serwera (patrz niżej)
-  };
+ document.getElementById("startBtn").onclick = () => {
+  socket.emit("set_category", { categories: getSelectedCats() });
+  socket.emit("start");
+};
+
 
   document.getElementById("nextBtn").onclick = () => {
     socket.emit("next_round");
@@ -79,6 +162,17 @@ function showBeforeStart() {
     if (!myId) return alert("Najpierw dołącz do gry!");
     socket.emit("pause", { id: myId });
   };
+
+
+function applyCategorySelection(list, labelText) {
+  // odhacz / zaznacz checkboxy
+  const set = new Set(list || []);
+  document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
+    cb.checked = set.has(cb.value);
+  });
+  // label nad przyciskami (jeśli masz #catLive)
+  if (labelText) document.getElementById("catLive").textContent = `Kategoria: ${labelText}`;
+}
 
   // ---- ODBIÓR ZDARZEŃ Z SERWERA ----
   socket.on("joined", data => {
@@ -99,9 +193,8 @@ function showBeforeStart() {
     }
   });
 
-  socket.on("error", data => {
-    alert(data.msg);
-  });
+  socket.on("error_msg", data => { alert(data.msg); });
+
 
   socket.on("role", data => {
     const { category, secret, runda } = data;
@@ -120,19 +213,29 @@ function showBeforeStart() {
     const t = data.time;
     document.getElementById("timer").innerText = (t === "" || t == null) ? "" : `⏳ ${t}s`;
   });
+socket.on("timer_update", d => {
+  const el = document.getElementById("timerSec");
+  if (el) el.value = d.seconds;
+});
 
   socket.on("paused", data => {
     document.getElementById("status").innerText =(data.msg || "");
   });
 
-  socket.on("clear", () => {
-    document.getElementById("role").innerText = "";
-    document.getElementById("timer").innerText = "";
-    document.getElementById("status").innerText = "Oczekiwanie...";
-    showBeforeStart();
+socket.on("clear", () => {
+  document.getElementById("role").innerText = "";
+  document.getElementById("timer").innerText = "";
+  document.getElementById("status").innerText = "Oczekiwanie...";
+  showBeforeStart();
 
-  
+  // 👇 reset wszystkich checkboxów kategorii
+  document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
+    cb.checked = false;
   });
+
+  console.log("[RESET] Odznaczono wszystkie kategorie po restarcie");
+});
+
 
 
 
@@ -152,9 +255,38 @@ socket.on("end", data => {
  document.body.classList.add("end");
   setTimeout(() => {
     document.body.classList.remove("end");
-  }, 300);
+  }, 1500);
 })
+
+// toggle panelu kategorii
+const picker = document.getElementById('catPicker');
+const toggleBtn = document.getElementById('toggleCats');
+
+toggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  picker.classList.toggle('open');
+});
+
+// zamknij kliknięciem poza panelem
+document.addEventListener('click', (e) => {
+  if (picker.classList.contains('open') &&
+      !picker.contains(e.target) &&
+      e.target !== toggleBtn) {
+    picker.classList.remove('open');
+  }
+});
+
+// zamknij ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') picker.classList.remove('open');
+});
+
+// jeśli po starcie gry chcesz schować panel:
+socket.on("info2", data => {
+  const host = data.host || "—";
+  document.getElementById("hostInfo").textContent = `Host: ${host}`;
+});
+
 </script>
 
-</body>
 </html>
