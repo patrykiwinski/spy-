@@ -1,0 +1,7 @@
+{
+  "Zwierzęta": ["Gekon", "Kot", "Pies", "Żaba", "Tygrys"],
+  "Przedmioty": ["Krzesło", "Telefon", "Komputer", "Piłka"],
+  "Osoby": ["Lewandowski", "Einstein", "Messi", "Obama"],
+  "Państwa": ["Polska", "Niemcy", "Francja", "USA", "Hiszpania"],
+  "Miasta": ["Warszawa", "Berlin", "Paryż", "Londyn", "Rzym"]
+}
