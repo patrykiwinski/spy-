@@ -9,7 +9,17 @@
     "Lis",
     "Orzeł",
     "Rekin",
-    "Pingwin"
+    "Pingwin",
+    "Kameleon",
+    "Koala",
+    "Lew",
+    "Panda",
+    "Jeż",
+    "Delfin",
+    "Sowa",
+    "Goryl",
+    "Mors",
+    "Wilk"
   ],
   "Przedmioty": [
     "Krzesło",
@@ -21,7 +31,17 @@
     "Latarka",
     "Słuchawki",
     "Nożyczki",
-    "Plecak"
+    "Plecak",
+    "Kubek",
+    "Parasol",
+    "Rower",
+    "Lampa",
+    "Zapałka",
+    "Okulary",
+    "Miotła",
+    "Poduszka",
+    "Kalkulator",
+    "Drzwi"
   ],
   "Osoby": [
     "Lewandowski",
@@ -33,7 +53,17 @@
     "Mickiewicz",
     "Taylor Swift",
     "Iga Świątek",
-    "Keanu Reeves"
+    "Keanu Reeves",
+    "Elon Musk",
+    "Bill Gates",
+    "Marie Curie",
+    "Ronaldo",
+    "Freddie Mercury",
+    "Napoleon",
+    "Nikola Tesla",
+    "Jan Paweł II",
+    "Shakira",
+    "Beyoncé"
   ],
   "Państwa": [
     "Polska",
@@ -45,7 +75,17 @@
     "Japonia",
     "Australia",
     "Egipt",
-    "Brazylia"
+    "Brazylia",
+    "Kanada",
+    "Chiny",
+    "Norwegia",
+    "Szwecja",
+    "Finlandia",
+    "Indie",
+    "Turcja",
+    "Meksyk",
+    "Argentyna",
+    "Islandia"
   ],
   "Miasta": [
     "Warszawa",
@@ -57,7 +97,17 @@
     "Tokio",
     "Nowy Jork",
     "Sydney",
-    "Kraków"
+    "Kraków",
+    "Praga",
+    "Oslo",
+    "Wiedeń",
+    "Los Angeles",
+    "Toronto",
+    "Seul",
+    "Kair",
+    "Dubaj",
+    "Lizbona",
+    "Chicago"
   ],
   "Jedzenie": [
     "Pizza",
@@ -69,7 +119,17 @@
     "Ramen",
     "Taco",
     "Schabowy",
-    "Lody"
+    "Lody",
+    "Hot dog",
+    "Kebab",
+    "Czekolada",
+    "Stek",
+    "Zupa pomidorowa",
+    "Naleśniki",
+    "Kawa",
+    "Herbata",
+    "Frytki",
+    "Ciasto"
   ],
   "Sporty": [
     "Piłka nożna",
@@ -81,7 +141,17 @@
     "Narciarstwo",
     "Szachy",
     "Lekkoatletyka",
-    "Formuła 1"
+    "Formuła 1",
+    "Hokej",
+    "Snowboard",
+    "Skoki narciarskie",
+    "Bieganie",
+    "Golf",
+    "Żeglarstwo",
+    "Kolarstwo",
+    "Esport",
+    "Judo",
+    "Rugby"
   ],
   "Zawody": [
     "Lekarz",
@@ -93,7 +163,17 @@
     "Kierowca",
     "Architekt",
     "Prawnik",
-    "Mechanik"
+    "Mechanik",
+    "Kelner",
+    "Muzyk",
+    "Fotograf",
+    "Pilot",
+    "Kucharz",
+    "Stolarz",
+    "Weterynarz",
+    "Fryzjer",
+    "Krawiec",
+    "Dziennikarz"
   ],
   "Filmy": [
     "Matrix",
@@ -105,7 +185,17 @@
     "Forrest Gump",
     "Joker",
     "Interstellar",
-    "Skazani na Shawshank"
+    "Skazani na Shawshank",
+    "Harry Potter",
+    "Władca Pierścieni",
+    "Avengers",
+    "Spider-Man",
+    "Deadpool",
+    "Top Gun",
+    "Mad Max",
+    "Oppenheimer",
+    "Star Wars",
+    "John Wick"
   ],
   "Muzyka": [
     "Rock",
@@ -117,7 +207,61 @@
     "Elektronika",
     "Disco Polo",
     "Reggae",
-    "Blues"
+    "Blues",
+    "Trap",
+    "Techno",
+    "House",
+    "Folk",
+    "Rap",
+    "K-pop",
+    "Country",
+    "R&B",
+    "Drill",
+    "Indie"
+  ],
+  "Gry": [
+    "Minecraft",
+    "Fortnite",
+    "League of Legends",
+    "CS2",
+    "Valorant",
+    "Among Us",
+    "GTA V",
+    "Clash Royale",
+    "Brawl Stars",
+    "FIFA",
+    "Rocket League",
+    "The Sims",
+    "Skyrim",
+    "Cyberpunk 2077",
+    "Overwatch",
+    "Call of Duty",
+    "Stardew Valley",
+    "Dota 2",
+    "Roblox",
+    "Terraria"
+  ],
+  "Marki": [
+    "Apple",
+    "Samsung",
+    "Nike",
+    "Adidas",
+    "Coca-Cola",
+    "Pepsi",
+    "BMW",
+    "Mercedes",
+    "Sony",
+    "Google",
+    "Lego",
+    "IKEA",
+    "Tesla",
+    "Ferrari",
+    "Microsoft",
+    "Amazon",
+    "Netflix",
+    "Puma",
+    "Rolex",
+    "Huawei"
   ],
   "clash royale": [
     "The Log",
@@ -242,7 +386,4 @@
     "Rune Giant",
     "Barbarian Hut"
   ]
-
 }
-
-
