@@ -8,6 +8,20 @@ html, body {
   text-align: center;
   overflow-x: hidden;
 }
+.app-ver {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  margin: 0;
+  color: #111;        /* prawie czarny */
+  font-size: 12px;
+  font-weight: 600;
+  background: none;   /* brak tła */
+  border: none;       /* brak borderów */
+  pointer-events: none; /* aby nie blokował kliknięć */
+}
+
 
 /* Główny kontener */
 .container {
@@ -181,3 +195,4 @@ html.end, body.end {
 #catPicker{
   background-color: #222222;
 }
+
