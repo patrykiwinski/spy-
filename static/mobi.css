@@ -14,7 +14,7 @@ html, body {
   left: 0;
   padding: 0;
   margin: 0;
-  color: #111;        /* prawie czarny */
+  color: #17174d;        /* prawie czarny */
   font-size: 12px;
   font-weight: 600;
   background: none;   /* brak tła */
@@ -195,4 +195,5 @@ html.end, body.end {
 #catPicker{
   background-color: #222222;
 }
+
 
