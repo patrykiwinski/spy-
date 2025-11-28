@@ -172,7 +172,7 @@ def join_game(data):
     global host_sid, host_name
     name = data.get("id", "Anonim")
     players[request.sid] = name
-
+    forma_dolaczyl = get_forma_dolaczyl(name)
     if host_sid is None:
         host_sid = request.sid
         host_name = name
@@ -320,6 +320,7 @@ def restart_game():
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+
 
 
 
