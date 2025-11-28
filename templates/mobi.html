@@ -11,7 +11,7 @@
 <body>
   <div id="hostInfo" class="host-info"> Host: —</div>
   <div class="container">
-    <h1>Who’s the Gekon?</h1>
+      <h1>Who’s the Gekon?</h1>
     
 
     <div id="status">Oczekiwanie...</div>
@@ -41,6 +41,7 @@
   {% for c in categories %}
     <label><input type="checkbox" name="catOpt" value="{{ c }}" checked> {{ c }}</label><br>
   {% endfor %}
+1.0.0
 </div>
 </div>
 
@@ -288,6 +289,7 @@ socket.on("info2", data => {
 });
 
 </script>
-1.0.0
+
 </html>
+
 
