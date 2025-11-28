@@ -17,6 +17,19 @@ timer_thread = None
 
 BASE = Path(__file__).resolve().parent
 
+def get_forma_dolaczyl(name: str) -> str:
+    name_lower = name.lower()
+
+    meskie_na_a = {"kuba", "kosma", "barnaba", "bonawentura", "ezra", "saba", "misha", "sasha"}
+    zenskie_bez_a = {"miriam", "beatrycze", "ingrid", "ester", "noemi", "rachel", "ruth"}
+
+    if (name_lower.endswith("a") and name_lower not in meskie_na_a) or name_lower in zenskie_bez_a:
+        return "dołączyła"
+    else:
+        return "dołączył"
+
+
+
 def load_index_and_data():
     idx  = json.loads((BASE / "categories_index.json").read_text(encoding="utf-8"))
     data = json.loads((BASE / "categories_data.json").read_text(encoding="utf-8"))
@@ -170,7 +183,7 @@ def join_game(data):
         emit("info2", {"host": host_name}, to=request.sid)
 
     emit("joined", {"msg": f"Dołączyłeś jako {name}"}, to=request.sid)
-    socketio.emit("info", {"msg": f"{name} dołączył do gry. Graczy: {len(players)}"})
+    socketio.emit("info", {"msg": f"Gracz {name} {forma_dolaczyl} do gry. Graczy: {len(players)}"})
 
 @socketio.on("disconnect")
 def on_disconnect():
@@ -307,6 +320,7 @@ def restart_game():
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+
 
 
 
