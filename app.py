@@ -164,7 +164,7 @@ def join_game(data):
         host_sid = request.sid
         host_name = name
         socketio.emit("info", {"msg": f"{host_name} jest hostem i ustawia kategorie."})
-        socketio.emit("info2", {"host": host_name})  # 👑 wysyłamy do wszystkich
+        socketio.emit("info2", {"👑host": host_name})  # 👑 wysyłamy do wszystkich
     else:
         # pokaż obecnego hosta nowemu graczowi
         emit("info2", {"host": host_name}, to=request.sid)
@@ -307,6 +307,7 @@ def restart_game():
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+
 
 
 
