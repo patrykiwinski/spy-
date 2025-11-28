@@ -170,7 +170,11 @@
     "Muzyk",
     "Fotograf",
     "Pilot",
+    "Informatyk",
     "Kucharz",
+    "Kierowniczka Budowy",
+    "Zawód rodziców",
+    "Projektant",
     "Stolarz",
     "Weterynarz",
     "Fryzjer",
@@ -389,4 +393,5 @@
     "Barbarian Hut"
   ]
 }
+
 
