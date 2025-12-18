@@ -119,6 +119,11 @@ def mobi():
     # zwracaj mobilny widok także pod "/"
     return render_template("mobi.html",categories=CATEGORIES_LIST)
 
+@app.route("/preview")
+def preview():
+    # Preview page for responsive testing
+    return render_template("preview.html") if Path("templates/preview.html").exists() else "Preview not available"
+
 
 # -------------- SOCKET HANDLERS --------------
 
