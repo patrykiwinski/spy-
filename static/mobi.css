@@ -550,12 +550,12 @@ h1 {
 
 /* Effects */
 html.boomFX, body.boomFX {
-  background: #1a202c;
+  background: #ba0000;
   transition: background 0.5s ease;
 }
 
 html.end, body.end {
-  background: #2d3748;
+  background: #5f97f5;
   transition: background 0.5s ease;
 }
 
@@ -582,3 +582,4 @@ html.end, body.end {
 .hidden {
   display: none !important;
 }
+
