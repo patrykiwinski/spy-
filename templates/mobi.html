@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Who’s the Gekon? – Mobilna wersja</title>
+  <title>Who's the Gekon? – Mobilna wersja</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&subset=latin,latin-ext&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/mobi.css" />
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
-<div class="app-ver">1.0.2</div>
+<div class="app-ver">1.0.4</div>
   <div id="hostInfo" class="host-info"> Host: —</div>
   <div class="container">
       <h1>Who’s the Gekon?</h1>
@@ -260,14 +263,12 @@
       const restartBtn = $("restartBtn");
       const nextBtn = $("nextBtn");
       const stopBtn = $("stopBtn");
-      const hostControls = document.querySelector(".host-controls");
 
       if (joinBtn) joinBtn.style.display = "inline-block";
       if (startBtn) startBtn.style.display = "inline-block";
       if (restartBtn) restartBtn.style.display = "inline-block";
       if (nextBtn) nextBtn.style.display = "none";
       if (stopBtn) stopBtn.style.display = "none";
-      if (hostControls) hostControls.style.display = "block";
     }
 
     function showAfterStart() {
@@ -276,14 +277,12 @@
       const restartBtn = $("restartBtn");
       const nextBtn = $("nextBtn");
       const stopBtn = $("stopBtn");
-      const hostControls = document.querySelector(".host-controls");
 
       if (joinBtn) joinBtn.style.display = "none";
       if (startBtn) startBtn.style.display = "none";
       if (restartBtn) restartBtn.style.display = "inline-block";
       if (nextBtn) nextBtn.style.display = "inline-block";
       if (stopBtn) stopBtn.style.display = "inline-block";
-      if (hostControls) hostControls.style.display = "none";
     }
 
     // Initial UI state
@@ -318,10 +317,31 @@
       };
     }
 
+    // Restart button with confirmation
+    let restartConfirmState = false;
     const restartBtn = $("restartBtn");
     if (restartBtn) {
       restartBtn.onclick = () => {
-        socket.emit("restart");
+        if (!restartConfirmState) {
+          // First click - show confirmation
+          restartConfirmState = true;
+          const originalText = restartBtn.textContent;
+          restartBtn.textContent = "Potwierdź restart";
+          restartBtn.style.background = "linear-gradient(135deg, #dc2626, #b91c1c)";
+          
+          // Reset after 3 seconds if not clicked again
+          setTimeout(() => {
+            if (restartConfirmState) {
+              restartConfirmState = false;
+              restartBtn.textContent = originalText;
+              restartBtn.style.background = "";
+            }
+          }, 3000);
+        } else {
+          // Second click - send restart signal
+          restartConfirmState = false;
+          socket.emit("restart");
+        }
       };
     }
 
@@ -364,6 +384,13 @@ function applyCategorySelection(list, labelText) {
 
       // Switch UI based on messages
       if (msg.startsWith("Gra rozpoczęta!")) {
+        // Reset restart button state when game starts
+        restartConfirmState = false;
+        const restartBtn = $("restartBtn");
+        if (restartBtn) {
+          restartBtn.textContent = "Restart/Koniec";
+          restartBtn.style.background = "";
+        }
         showAfterStart();
       } else if (msg.startsWith("Nowa runda!")) {
         showAfterStart();
@@ -418,10 +445,18 @@ function applyCategorySelection(list, labelText) {
       const roleEl = $("role");
       const timerEl = $("timer");
       const statusEl = $("status");
+      const restartBtn = $("restartBtn");
       
       if (roleEl) roleEl.innerText = "";
       if (timerEl) timerEl.innerText = "";
       if (statusEl) statusEl.innerText = "Oczekiwanie...";
+      
+      // Reset restart button state
+      restartConfirmState = false;
+      if (restartBtn) {
+        restartBtn.textContent = "Restart/Koniec";
+        restartBtn.style.background = "";
+      }
       
       showBeforeStart();
       closeModal();
