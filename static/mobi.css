@@ -1,3 +1,5 @@
+@charset "UTF-8";
+
 /* ===== MOBILE-FIRST DESIGN ===== */
 * {
   box-sizing: border-box;
@@ -7,20 +9,36 @@
 html, body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: #0a0a0a;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: linear-gradient(-45deg, #0a0a0f, #1a1a2e, #16213e, #0f1419);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
   color: #ffffff;
   text-align: center;
   overflow-x: hidden;
   height: 100vh;
   height: 100dvh; /* Dynamic viewport height for mobile */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .app-ver {
   position: absolute;
   top: 8px;
   left: 8px;
-  color: #444;
+  color: #4a5568;
   font-size: 10px;
   font-weight: 500;
   pointer-events: none;
@@ -32,7 +50,7 @@ html, body {
   top: 8px;
   right: 8px;
   font-size: 12px;
-  color: #888;
+  color: #718096;
   z-index: 1;
 }
 
@@ -55,15 +73,17 @@ h1 {
   font-size: clamp(28px, 8vw, 42px);
   margin: 0 0 24px;
   color: #ffffff;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 8px rgba(99, 179, 237, 0.3),
+               0 0 20px rgba(99, 179, 237, 0.1);
 }
 
 /* Status */
 #status {
   margin: 0 0 20px;
   font-size: clamp(14px, 4vw, 18px);
-  color: #aaa;
+  color: #a0aec0;
   min-height: 24px;
 }
 
@@ -76,21 +96,30 @@ h1 {
   margin: 20px 0;
   padding: 20px;
   background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(99, 179, 237, 0.2);
   border-radius: 16px;
   max-width: 90%;
   min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Timer */
 #timer {
   margin: 16px 0;
   font-size: clamp(32px, 10vw, 48px);
-  font-weight: 700;
-  color: #ff4444;
+  font-weight: 800;
+  color: #60a5fa;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.8),
+               0 0 20px rgba(96, 165, 250, 0.5),
+               0 2px 4px rgba(0, 0, 0, 0.5),
+               inset 0 1px 0 rgba(255, 255, 255, 0.3);
   min-height: 50px;
+  letter-spacing: -1px;
 }
 
 /* Hide empty elements */
@@ -127,23 +156,41 @@ h1 {
 .game-btn:active {
   transform: scale(0.98);
   opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4),
+              inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Simplified Color Scheme - 3 main colors */
+/* Sleek Design with Metallic Shadows & Vibrant Colors */
 .orange {
-  background: #ff6b35;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              0 0 20px rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .blue {
-  background: #4a90e2;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              0 0 20px rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .red {
-  background: #e74c3c;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              0 0 20px rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .green {
-  background: #27ae60;
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              0 0 20px rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Big Stop Button */
@@ -157,15 +204,25 @@ h1 {
   width: 100%;
   height: 80px;
   font-size: clamp(20px, 6vw, 24px);
-  font-weight: 700;
-  background: #ff4444;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: #ffffff;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
   touch-action: manipulation;
-  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+  box-shadow: 0 6px 24px rgba(239, 68, 68, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3),
+              0 0 30px rgba(239, 68, 68, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.stop-button:active {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.4),
+              inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  transform: scale(0.98);
 }
 
 .stop-button:active {
@@ -186,26 +243,32 @@ h1 {
 .settings-btn {
   padding: 14px 28px;
   font-size: 16px;
-  font-weight: 600;
-  background: linear-gradient(135deg, rgba(74, 144, 226, 0.9), rgba(74, 144, 226, 0.7));
+  font-weight: 700;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: #ffffff;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
   touch-action: manipulation;
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              0 0 20px rgba(59, 130, 246, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-width: 140px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .settings-btn:hover {
-  background: linear-gradient(135deg, rgba(74, 144, 226, 1), rgba(74, 144, 226, 0.9));
-  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3),
+              0 0 25px rgba(59, 130, 246, 0.3);
   transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .settings-btn:active {
@@ -244,12 +307,14 @@ h1 {
   position: relative;
   width: 100%;
   max-height: 85vh;
-  background: #1a1a1a;
+  background: #0f1419;
+  border: 1px solid rgba(99, 179, 237, 0.2);
   border-radius: 24px 24px 0 0;
   padding: 24px;
   overflow-y: auto;
   z-index: 1001;
   animation: slideUp 0.3s ease;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
 }
 
 @keyframes slideUp {
@@ -461,29 +526,36 @@ h1 {
   width: 100%;
   height: 48px;
   font-size: 16px;
-  font-weight: 600;
-  background: #4a90e2;
-  border: none;
+  font-weight: 700;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   color: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
   touch-action: manipulation;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4),
+             inset 0 1px 0 rgba(255, 255, 255, 0.2),
+             0 0 20px rgba(16, 185, 129, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .apply-btn:active {
-  background: #3a7bc8;
+  background: linear-gradient(135deg, #059669, #047857);
   transform: scale(0.98);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3),
+              inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Effects */
 html.boomFX, body.boomFX {
-  background: #ff0000;
+  background: #1a202c;
   transition: background 0.5s ease;
 }
 
 html.end, body.end {
-  background: #ffffff;
+  background: #2d3748;
   transition: background 0.5s ease;
 }
 
