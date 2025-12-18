@@ -9,7 +9,7 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
-<div class="app-ver">1.0.1</div>
+<div class="app-ver">1.0.2</div>
   <div id="hostInfo" class="host-info"> Host: —</div>
   <div class="container">
       <h1>Who’s the Gekon?</h1>
@@ -260,12 +260,14 @@
       const restartBtn = $("restartBtn");
       const nextBtn = $("nextBtn");
       const stopBtn = $("stopBtn");
+      const hostControls = document.querySelector(".host-controls");
 
       if (joinBtn) joinBtn.style.display = "inline-block";
       if (startBtn) startBtn.style.display = "inline-block";
       if (restartBtn) restartBtn.style.display = "inline-block";
       if (nextBtn) nextBtn.style.display = "none";
       if (stopBtn) stopBtn.style.display = "none";
+      if (hostControls) hostControls.style.display = "block";
     }
 
     function showAfterStart() {
@@ -274,12 +276,14 @@
       const restartBtn = $("restartBtn");
       const nextBtn = $("nextBtn");
       const stopBtn = $("stopBtn");
+      const hostControls = document.querySelector(".host-controls");
 
       if (joinBtn) joinBtn.style.display = "none";
       if (startBtn) startBtn.style.display = "none";
       if (restartBtn) restartBtn.style.display = "inline-block";
       if (nextBtn) nextBtn.style.display = "inline-block";
       if (stopBtn) stopBtn.style.display = "inline-block";
+      if (hostControls) hostControls.style.display = "none";
     }
 
     // Initial UI state
