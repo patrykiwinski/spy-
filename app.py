@@ -26,6 +26,7 @@ DEFAULT_TIMER_SECONDS = 30
 MIN_TIMER_SECONDS = 5
 MAX_TIMER_SECONDS = 900
 MIN_PLAYERS = 2
+timer_version = 0
 
 # Game state
 TIMER_SECONDS = DEFAULT_TIMER_SECONDS
@@ -78,29 +79,40 @@ selected_categories: List[str] = []
 
 # ---------------- TIMER ----------------
 def run_timer(seconds: Optional[int] = None) -> None:
-    global stop_flag, timer_task
-    
+    global stop_flag, timer_task, timer_version
+
     if seconds is None:
         seconds = TIMER_SECONDS
 
     stop_timer()
     stop_flag = False
 
-    # 🔥 NATYCHMIAST reset timera na UI
-    socketio.emit("timer", {"time": seconds})
+    timer_version += 1
+    local_version = timer_version
+
+    # NATYCHMIAST reset UI
+    socketio.emit("timer", {
+        "time": seconds,
+        "v": local_version
+    })
 
     def countdown():
         global stop_flag
         for i in range(seconds - 1, -1, -1):
-            if stop_flag:
+            if stop_flag or local_version != timer_version:
                 return
-            socketio.emit("timer", {"time": i})
+            socketio.emit("timer", {
+                "time": i,
+                "v": local_version
+            })
             time.sleep(1)
-        if not stop_flag:
+
+        if not stop_flag and local_version == timer_version:
             socketio.emit("end", {"color": "#ffffff"})
 
     timer_task = socketio.start_background_task(countdown)
     logger.info(f"Timer started: {seconds}s")
+
 
 
 def stop_timer() -> None:
@@ -383,6 +395,7 @@ def restart_game() -> None:
 if __name__ == "__main__":
     logger.info("Starting server on 0.0.0.0:5000")
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+
 
 
 
