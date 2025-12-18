@@ -11,7 +11,7 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
-<div class="app-ver">1.0.5</div>
+<div class="app-ver">1.0.6</div>
   <div id="hostInfo" class="host-info"> Host: —</div>
   <div class="container">
       <h1>Who’s the Gekon?</h1>
@@ -226,6 +226,7 @@
 
   <script>
     // Constants
+    let timerVersion = 0;
     const VIBRATION_DURATION = 450; // 900/2 milliseconds
     const BOOM_FX_DURATION = 3000;
     const END_FX_DURATION = 1500;
@@ -559,13 +560,12 @@ function applyCategorySelection(list, labelText) {
       showAfterStart();
     });
 
-    socket.on("timer", data => {
-      const timerEl = $("timer");
-      if (!timerEl) return;
-      
-      const t = data.time;
-      timerEl.innerText = (t === "" || t == null) ? "" : `⏳ ${t}s`;
-    });
+   socket.on("timer", data => {
+  if (data.v < timerVersion) return;
+  timerVersion = data.v;
+  $('timer').innerText = `⏳ ${data.time}s`;
+});
+
 
     socket.on("timer_update", d => {
       const timerInput = $("timerSec");
@@ -660,6 +660,7 @@ function applyCategorySelection(list, labelText) {
 </script>
 
 </html>
+
 
 
 
