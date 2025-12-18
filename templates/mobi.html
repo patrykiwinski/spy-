@@ -31,19 +31,49 @@
     </div>
     
 
-<!-- PICKER NA DOLE KONTENERA -->
-<div id="catPicker" class="cat-picker">
-  <label for="timerSec">Czas:</label>
-  <input id="timerSec" type="number" min="5" max="900" step="5" value="30" class="timer-input">
-  <button id="applyTimer" class="game-btn deepb">OK</button>
-
-  <button id="toggleCats" class="game-btn deepk">Kategorie </button>
-  <div id="catList" class="cat-list hidden">
-  {% for c in categories %}
-    <label><input type="checkbox" name="catOpt" value="{{ c }}" checked> {{ c }}</label><br>
-  {% endfor %}
-
+<!-- Host Controls (only visible to host) -->
+<div id="hostControls" class="host-controls">
+  <button id="settingsBtn" class="settings-btn">⚙️ Ustawienia</button>
 </div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Ustawienia (Host)</h2>
+      <button id="closeModal" class="close-btn">✕</button>
+    </div>
+    
+    <div class="settings-section">
+      <label class="settings-label">Czas rundy (sekundy)</label>
+      <div class="timer-controls">
+        <input type="range" id="timerSlider" min="5" max="300" step="5" value="30" class="timer-slider">
+        <div class="timer-display">
+          <input type="number" id="timerSec" min="5" max="900" step="5" value="30" class="timer-input">
+          <span class="timer-unit">s</span>
+        </div>
+      </div>
+      <button id="applyTimer" class="apply-btn">Zapisz czas</button>
+    </div>
+
+    <div class="settings-section">
+      <label class="settings-label">Kategorie</label>
+      <div class="cat-controls">
+        <button id="selectAllCats" class="select-btn">Zaznacz wszystkie</button>
+        <button id="deselectAllCats" class="select-btn">Odznacz wszystkie</button>
+      </div>
+      <div id="catList" class="cat-list">
+        {% for c in categories %}
+        <label class="cat-item">
+          <input type="checkbox" name="catOpt" value="{{ c }}" checked>
+          <span class="cat-name">{{ c }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <button id="applyCats" class="apply-btn">Zapisz kategorie</button>
+    </div>
+  </div>
+  <div class="modal-overlay"></div>
 </div>
 
 
@@ -52,118 +82,255 @@
 
 
   <script>
+    // Constants
+    const VIBRATION_DURATION = 450; // 900/2 milliseconds
+    const BOOM_FX_DURATION = 3000;
+    const END_FX_DURATION = 1500;
 
- 
-    const socket = io();
-    document.addEventListener("DOMContentLoaded", () => {
-  const toggleBtn = document.getElementById("toggleCats");
-  const catList   = document.getElementById("catList");
-  if (toggleBtn && catList) {
-    toggleBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      catList.classList.toggle("hidden");
-    });
-  }
-});
+    // State
     let myId = "";
-    let chosenCats = [];
-const $ = id => document.getElementById(id);
-function getSelectedCats(){
-  return Array.from(document.querySelectorAll('input[name="catOpt"]:checked'))
-              .map(el => el.value);
-}
-document.getElementById("applyTimer").onclick = () => {
-  const v = parseInt(document.getElementById("timerSec").value, 10);
-  socket.emit("set_timer", { seconds: v }, (ack) => {
-    console.log("[ACK] set_timer:", ack);
-  });
-};
+    let socket = null;
 
-
-
-
-
-
-function applyCategorySelection(list, labelText) {
-  const set = new Set(list || []);
-  document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
-    cb.checked = set.has(cb.value);
-  });
-
-
-  // pokaż w statusie
-  document.getElementById("status").textContent = `Kategoria: ${labelText || (list && list.join(", ")) || "Losowa"}`;
-}
-document.getElementById("catPicker").addEventListener("change", (e) => {
-  if (e.target && e.target.name === "catOpt") {
-    const cats = Array.from(document.querySelectorAll('input[name="catOpt"]:checked'))
-                      .map(el => el.value);
-    console.log('[UI] wybór kategorii ->', cats);
-    // wyślij + oczekuj ACK z serwera
-    socket.emit("set_category", { categories: cats }, (ack) => {
-      console.log('[ACK] set_category:', ack);
+    // DOM helpers
+    const $ = id => document.getElementById(id);
+    
+    // Initialize socket connection
+    socket = io();
+    
+    // Socket connection error handling
+    socket.on("connect_error", (error) => {
+      console.error("Connection error:", error);
+      const statusEl = $("status");
+      if (statusEl) {
+        statusEl.textContent = "Błąd połączenia. Próbuję ponownie...";
+      }
     });
-  }
-});
+
+    socket.on("disconnect", () => {
+      console.warn("Disconnected from server");
+      const statusEl = $("status");
+      if (statusEl) {
+        statusEl.textContent = "Rozłączono z serwerem";
+      }
+    });
+
+    socket.on("reconnect", () => {
+      console.log("Reconnected to server");
+      const statusEl = $("status");
+      if (statusEl) {
+        statusEl.textContent = "Połączono ponownie";
+      }
+    });
+
+    // Category selection helpers
+    function getSelectedCats() {
+      const checkboxes = document.querySelectorAll('input[name="catOpt"]:checked');
+      return Array.from(checkboxes).map(el => el.value);
+    }
+
+    function applyCategorySelection(list, labelText) {
+      const set = new Set(list || []);
+      document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
+        cb.checked = set.has(cb.value);
+      });
+
+      const statusEl = $("status");
+      if (statusEl) {
+        statusEl.textContent = `Kategoria: ${labelText || (list && list.join(", ")) || "Losowa"}`;
+      }
+    }
+
+    // Modal controls
+    const settingsBtn = $("settingsBtn");
+    const settingsModal = $("settingsModal");
+    const closeModalBtn = $("closeModal");
+    const modalOverlay = settingsModal?.querySelector(".modal-overlay");
+
+    function openModal() {
+      if (settingsModal) {
+        settingsModal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+      }
+    }
+
+    function closeModal() {
+      if (settingsModal) {
+        settingsModal.classList.add("hidden");
+        document.body.style.overflow = "";
+      }
+    }
+
+    if (settingsBtn) {
+      settingsBtn.onclick = openModal;
+    }
+
+    if (closeModalBtn) {
+      closeModalBtn.onclick = closeModal;
+    }
+
+    if (modalOverlay) {
+      modalOverlay.onclick = closeModal;
+    }
+
+    // Timer slider sync with input
+    const timerSlider = $("timerSlider");
+    const timerInput = $("timerSec");
+
+    if (timerSlider && timerInput) {
+      timerSlider.addEventListener("input", (e) => {
+        timerInput.value = e.target.value;
+      });
+
+      timerInput.addEventListener("input", (e) => {
+        let val = parseInt(e.target.value, 10);
+        if (isNaN(val)) val = 30;
+        val = Math.max(5, Math.min(900, val));
+        timerSlider.value = Math.min(300, val);
+        timerInput.value = val;
+      });
+    }
+
+    // Timer apply
+    const applyTimerBtn = $("applyTimer");
+    if (applyTimerBtn) {
+      applyTimerBtn.onclick = () => {
+        if (!timerInput) return;
+        
+        const v = parseInt(timerInput.value, 10);
+        if (isNaN(v) || v < 5 || v > 900) {
+          alert("Czas musi być między 5 a 900 sekund");
+          return;
+        }
+        
+        socket.emit("set_timer", { seconds: v }, (ack) => {
+          console.log("[ACK] set_timer:", ack);
+          closeModal();
+        });
+      };
+    }
+
+    // Category select all/none
+    const selectAllBtn = $("selectAllCats");
+    const deselectAllBtn = $("deselectAllCats");
+    const applyCatsBtn = $("applyCats");
+
+    if (selectAllBtn) {
+      selectAllBtn.onclick = () => {
+        document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
+          cb.checked = true;
+        });
+      };
+    }
+
+    if (deselectAllBtn) {
+      deselectAllBtn.onclick = () => {
+        document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
+          cb.checked = false;
+        });
+      };
+    }
+
+    if (applyCatsBtn) {
+      applyCatsBtn.onclick = () => {
+        const cats = getSelectedCats();
+        socket.emit("set_category", { categories: cats }, (ack) => {
+          console.log('[ACK] set_category:', ack);
+          closeModal();
+        });
+      };
+    }
+
+
+
+    // Show/hide host controls based on host status
+    function updateHostControls(isHost) {
+      const hostControls = document.querySelector(".host-controls");
+      if (hostControls) {
+        hostControls.style.display = isHost ? "block" : "none";
+      }
+    }
 
 
 
 
-// ---- POKAZYWANIE / CHOWANIE PRZYCISKÓW ----
-function showBeforeStart() {
-    document.getElementById("joinBtn").style.display    = "inline-block";
-    document.getElementById("startBtn").style.display   = "inline-block";
-    document.getElementById("restartBtn").style.display = "inline-block";
-    document.getElementById("nextBtn").style.display    = "none";
-    document.getElementById("stopBtn").style.display    = "none";
-    $("catPicker").classList.remove("hidden");
-    const catList = document.getElementById("catList");
-  if (catList) catList.classList.add("hidden"); 
+    // UI state management
+    function showBeforeStart() {
+      const joinBtn = $("joinBtn");
+      const startBtn = $("startBtn");
+      const restartBtn = $("restartBtn");
+      const nextBtn = $("nextBtn");
+      const stopBtn = $("stopBtn");
 
-  }
+      if (joinBtn) joinBtn.style.display = "inline-block";
+      if (startBtn) startBtn.style.display = "inline-block";
+      if (restartBtn) restartBtn.style.display = "inline-block";
+      if (nextBtn) nextBtn.style.display = "none";
+      if (stopBtn) stopBtn.style.display = "none";
+    }
 
-  function showAfterStart() {
-    document.getElementById("joinBtn").style.display    = "none";
-    document.getElementById("startBtn").style.display   = "none";
-    document.getElementById("restartBtn").style.display = "inline-block"; // jeśli chcesz ukryć, zmień na "none"
-    document.getElementById("nextBtn").style.display    = "inline-block";
-    document.getElementById("stopBtn").style.display    = "inline-block";
-    $("catPicker").classList.add("hidden");
-    const catList = document.getElementById("catList");
-  if (catList) catList.classList.add("hidden"); 
-  }
+    function showAfterStart() {
+      const joinBtn = $("joinBtn");
+      const startBtn = $("startBtn");
+      const restartBtn = $("restartBtn");
+      const nextBtn = $("nextBtn");
+      const stopBtn = $("stopBtn");
 
-  // startowy układ
-  showBeforeStart();
+      if (joinBtn) joinBtn.style.display = "none";
+      if (startBtn) startBtn.style.display = "none";
+      if (restartBtn) restartBtn.style.display = "inline-block";
+      if (nextBtn) nextBtn.style.display = "inline-block";
+      if (stopBtn) stopBtn.style.display = "inline-block";
+    }
 
-  // ---- HANDLERY KLIKÓW ----
-  document.getElementById("joinBtn").onclick = () => {
-    const name = prompt("Podaj swoje imię:");
-    if (!name || name.trim() === "") return alert("Musisz wpisać imię!");
-    myId = name.trim();
-    socket.emit("join", { id: myId });
-  };
+    // Initial UI state
+    showBeforeStart();
 
- document.getElementById("startBtn").onclick = () => {
-  socket.emit("set_category", { categories: getSelectedCats() });
-  socket.emit("start");
-};
+    // Event handlers
+    const joinBtn = $("joinBtn");
+    if (joinBtn) {
+      joinBtn.onclick = () => {
+        const name = prompt("Podaj swoje imię:");
+        if (!name || name.trim() === "") {
+          alert("Musisz wpisać imię!");
+          return;
+        }
+        myId = name.trim();
+        socket.emit("join", { id: myId });
+      };
+    }
 
+    const startBtn = $("startBtn");
+    if (startBtn) {
+      startBtn.onclick = () => {
+        socket.emit("set_category", { categories: getSelectedCats() });
+        socket.emit("start");
+      };
+    }
 
-  document.getElementById("nextBtn").onclick = () => {
-    socket.emit("next_round");
-  };
+    const nextBtn = $("nextBtn");
+    if (nextBtn) {
+      nextBtn.onclick = () => {
+        socket.emit("next_round");
+      };
+    }
 
-  document.getElementById("restartBtn").onclick = () => {
-    socket.emit("restart");
-    // układ przełączy się po "clear"/"Gra zresetowana"
-  };
+    const restartBtn = $("restartBtn");
+    if (restartBtn) {
+      restartBtn.onclick = () => {
+        socket.emit("restart");
+      };
+    }
 
-  document.getElementById("stopBtn").onclick = () => {
-    if (!myId) return alert("Najpierw dołącz do gry!");
-    socket.emit("pause", { id: myId });
-  };
+    const stopBtn = $("stopBtn");
+    if (stopBtn) {
+      stopBtn.onclick = () => {
+        if (!myId) {
+          alert("Najpierw dołącz do gry!");
+          return;
+        }
+        socket.emit("pause", { id: myId });
+      };
+    }
 
 
 function applyCategorySelection(list, labelText) {
@@ -176,118 +343,140 @@ function applyCategorySelection(list, labelText) {
   if (labelText) document.getElementById("catLive").textContent = `Kategoria: ${labelText}`;
 }
 
-  // ---- ODBIÓR ZDARZEŃ Z SERWERA ----
-  socket.on("joined", data => {
-    document.getElementById("status").innerText = data.msg;
-  });
+    // Socket event handlers
+    socket.on("joined", data => {
+      const statusEl = $("status");
+      if (statusEl && data.msg) {
+        statusEl.innerText = data.msg;
+      }
+    });
 
-  socket.on("info", data => {
-    const msg = data.msg || "";
-    document.getElementById("status").innerText = msg;
+    socket.on("info", data => {
+      const statusEl = $("status");
+      if (!statusEl) return;
+      
+      const msg = data.msg || "";
+      statusEl.innerText = msg;
 
-    // Przełącz układ na podstawie komunikatów
-    if (msg.startsWith("Gra rozpoczęta!")) {
+      // Switch UI based on messages
+      if (msg.startsWith("Gra rozpoczęta!")) {
+        showAfterStart();
+      } else if (msg.startsWith("Nowa runda!")) {
+        showAfterStart();
+      } else if (msg.toLowerCase().includes("zresetowana")) {
+        showBeforeStart();
+      }
+    });
+
+    socket.on("error_msg", data => {
+      if (data && data.msg) {
+        alert(data.msg);
+      }
+    });
+
+
+    socket.on("role", data => {
+      const roleEl = $("role");
+      if (!roleEl) return;
+      
+      const { category, secret, runda } = data;
+      if (secret) {
+        roleEl.innerText = `Runda ${runda}\n✅ Gracz\nKategoria: ${category}\nHasło: ${secret}`;
+      } else {
+        roleEl.innerText = `Runda ${runda}\n🕵️‍♂️ SZPIEG\nKategoria: ${category}`;
+      }
       showAfterStart();
-    } else if (msg.startsWith("Nowa runda!")) {
-      showAfterStart();
-    } else if (msg.toLowerCase().includes("zresetowana")) {
+    });
+
+    socket.on("timer", data => {
+      const timerEl = $("timer");
+      if (!timerEl) return;
+      
+      const t = data.time;
+      timerEl.innerText = (t === "" || t == null) ? "" : `⏳ ${t}s`;
+    });
+
+    socket.on("timer_update", d => {
+      const timerInput = $("timerSec");
+      if (timerInput && d.seconds) {
+        timerInput.value = d.seconds;
+      }
+    });
+
+    socket.on("paused", data => {
+      const statusEl = $("status");
+      if (statusEl && data.msg) {
+        statusEl.innerText = data.msg;
+      }
+    });
+
+    socket.on("clear", () => {
+      const roleEl = $("role");
+      const timerEl = $("timer");
+      const statusEl = $("status");
+      
+      if (roleEl) roleEl.innerText = "";
+      if (timerEl) timerEl.innerText = "";
+      if (statusEl) statusEl.innerText = "Oczekiwanie...";
+      
       showBeforeStart();
-    }
-  });
+      closeModal();
 
-  socket.on("error_msg", data => { alert(data.msg); });
+      // Reset all category checkboxes
+      document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
+        cb.checked = false;
+      });
 
-
-  socket.on("role", data => {
-    const { category, secret, runda } = data;
-    if (secret) {
-      document.getElementById("role").innerText =
-        `Runda ${runda}\n✅ Gracz\nKategoria: ${category}\nHasło: ${secret}`;
-    } else {
-      document.getElementById("role").innerText =
-        `Runda ${runda}\n🕵️‍♂️ SZPIEG\nKategoria: ${category}`;
-    }
-    // na wszelki wypadek (gdyby info przyszło później)
-    showAfterStart();
-  });
-
-  socket.on("timer", data => {
-    const t = data.time;
-    document.getElementById("timer").innerText = (t === "" || t == null) ? "" : `⏳ ${t}s`;
-  });
-socket.on("timer_update", d => {
-  const el = document.getElementById("timerSec");
-  if (el) el.value = d.seconds;
-});
-
-  socket.on("paused", data => {
-    document.getElementById("status").innerText =(data.msg || "");
-  });
-
-socket.on("clear", () => {
-  document.getElementById("role").innerText = "";
-  document.getElementById("timer").innerText = "";
-  document.getElementById("status").innerText = "Oczekiwanie...";
-  showBeforeStart();
-
-  // 👇 reset wszystkich checkboxów kategorii
-  document.querySelectorAll('input[name="catOpt"]').forEach(cb => {
-    cb.checked = false;
-  });
-
-  console.log("[RESET] Odznaczono wszystkie kategorie po restarcie");
-});
+      console.log("[RESET] Odznaczono wszystkie kategorie po restarcie");
+    });
 
 
 
 
-socket.on("boom", data => {
+    socket.on("boom", data => {
+      if (navigator.vibrate) {
+        navigator.vibrate(VIBRATION_DURATION);
+      }
+      document.body.classList.add("boomFX");
+      setTimeout(() => {
+        document.body.classList.remove("boomFX");
+      }, BOOM_FX_DURATION);
+    });
 
-  if (navigator.vibrate)
-   navigator.vibrate(900/2)
- document.body.classList.add("boomFX");
-  setTimeout(() => {
-    document.body.classList.remove("boomFX");
-  }, 3000); // wraca do normalnego
-})
-socket.on("end", data => {
+    socket.on("end", data => {
+      if (navigator.vibrate) {
+        navigator.vibrate(VIBRATION_DURATION);
+      }
+      document.body.classList.add("end");
+      setTimeout(() => {
+        document.body.classList.remove("end");
+      }, END_FX_DURATION);
+    });
 
-  if (navigator.vibrate)
-   navigator.vibrate(900/2)
- document.body.classList.add("end");
-  setTimeout(() => {
-    document.body.classList.remove("end");
-  }, 1500);
-})
+    // Close modal on ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && settingsModal && !settingsModal.classList.contains('hidden')) {
+        closeModal();
+      }
+    });
 
-// toggle panelu kategorii
-const picker = document.getElementById('catPicker');
-const toggleBtn = document.getElementById('toggleCats');
+    socket.on("info2", data => {
+      const hostInfo = $("hostInfo");
+      if (hostInfo) {
+        const host = data.host || "—";
+        hostInfo.textContent = `Host: ${host}`;
+      }
+      
+      // Check if current user is host
+      const isHost = data.host === myId || (data.host && myId && data.host.toLowerCase() === myId.toLowerCase());
+      updateHostControls(isHost);
+    });
 
-toggleBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  picker.classList.toggle('open');
-});
-
-// zamknij kliknięciem poza panelem
-document.addEventListener('click', (e) => {
-  if (picker.classList.contains('open') &&
-      !picker.contains(e.target) &&
-      e.target !== toggleBtn) {
-    picker.classList.remove('open');
-  }
-});
-
-// zamknij ESC
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') picker.classList.remove('open');
-});
-
-// jeśli po starcie gry chcesz schować panel:
-socket.on("info2", data => {
-  const host = data.host || "—";
-  document.getElementById("hostInfo").textContent = `Host: ${host}`;
-});
+    socket.on("category_update", data => {
+      if (data) {
+        applyCategorySelection(data.selected, data.label);
+      }
+    });
 
 </script>
 

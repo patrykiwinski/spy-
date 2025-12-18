@@ -1,140 +1,470 @@
-/* ===== BAZA ===== */
+/* ===== MOBILE-FIRST DESIGN ===== */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
 html, body {
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
-  background: #121212;
-  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: #0a0a0a;
+  color: #ffffff;
   text-align: center;
   overflow-x: hidden;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
 }
+
 .app-ver {
   position: absolute;
-  top: 0;
-  left: 0;
-  padding: 0;
-  margin: 0;
-  color: #17174d;        /* prawie czarny */
-  font-size: 12px;
-  font-weight: 600;
-  background: none;   /* brak tła */
-  border: none;       /* brak borderów */
-  pointer-events: none; /* aby nie blokował kliknięć */
+  top: 8px;
+  left: 8px;
+  color: #444;
+  font-size: 10px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 1;
 }
 
+.host-info {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 12px;
+  color: #888;
+  z-index: 1;
+}
 
-/* Główny kontener */
+/* Main Container */
 .container {
-  position: relative;            /* pozycjonowanie pickera względem kontenera */
-  width: 98vw;
-  height: 100vh;
-  max-width: 500px;
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 140px;         /* MIEJSCE na picker na dole */
+  justify-content: flex-start;
+  padding: 60px 16px 120px;
   box-sizing: border-box;
 }
 
-/* Nagłówek */
+/* Header */
 h1 {
-  font-size: 8vw;
-  margin-bottom: 4vh;
-  color: #ffcc00;
+  font-size: clamp(28px, 8vw, 42px);
+  margin: 0 0 24px;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 /* Status */
 #status {
-  margin-bottom: 4vh;
-  font-size: 6vw;
+  margin: 0 0 20px;
+  font-size: clamp(14px, 4vw, 18px);
+  color: #aaa;
+  min-height: 24px;
 }
 
-/* Rola */
+/* Role Display */
 #role {
-  font-size: 7vw;
-  font-weight: bold;
+  font-size: clamp(18px, 5vw, 24px);
+  font-weight: 600;
   white-space: pre-line;
+  line-height: 1.5;
+  margin: 20px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  max-width: 90%;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Timer */
 #timer {
-  margin-top: 2vh;
-  font-size: 6vw;
-  font-weight: bold;
-  color: #f44336;
+  margin: 16px 0;
+  font-size: clamp(32px, 10vw, 48px);
+  font-weight: 700;
+  color: #ff4444;
+  min-height: 50px;
 }
 
-/* Ukrywanie pustych */
+/* Hide empty elements */
 #status:empty,
 #role:empty,
 #timer:empty {
   display: none;
 }
 
-/* Siatka 2x2 (przyciski) */
+/* Button Grid */
 .btn-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 12px;
   width: 100%;
-  max-width: 500px;
-  margin-top: 20px;
+  max-width: 400px;
+  margin: 24px 0;
 }
 
 .game-btn {
   width: 100%;
-  height: 80px;
-  font-size: 5vw;
-  font-weight: bold;
+  height: 56px;
+  font-size: clamp(14px, 4vw, 16px);
+  font-weight: 600;
   border: none;
   border-radius: 12px;
-  color: #fff;
+  color: #ffffff;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  user-select: none;
 }
 
-/* Kolory przycisków */
-.orange { background: #ff9800; }
-.orange:active { background: #e68900; }
+.game-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
 
-.blue { background: #2196f3; }
-.blue:active { background: #1976d2; }
+/* Simplified Color Scheme - 3 main colors */
+.orange {
+  background: #ff6b35;
+}
 
-/* U CIEBIE 'red' to faktycznie fiolet — zostawiam jak było */
-.red { background: #d13bff; }
-.red:active { background: #c20cff; }
+.blue {
+  background: #4a90e2;
+}
 
-.green { background: #4caf50; }
-.green:active { background: #388e3c; }
-.deepb { background: #360b6d; }
-.deepk { background: #5b1baf;
-width: 70%;
-  height: 60px;
-  font-size: 2vw;
-  font-weight: bold;
-  border: none;
-  border-radius: 12px;
-  color: #fff;
-  cursor: pointer;
-  transition: 0.2s; }
-/* Duży przycisk */
+.red {
+  background: #e74c3c;
+}
+
+.green {
+  background: #27ae60;
+}
+
+/* Big Stop Button */
+.big-btn {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 24px;
+}
+
 .stop-button {
-  margin-top: 11vh;
-  width: 90vw;
-  max-width: 500px;
-  height: 100px;
-  font-size: 7vw;
-  font-weight: bold;
+  width: 100%;
+  height: 80px;
+  font-size: clamp(20px, 6vw, 24px);
+  font-weight: 700;
   background: #ff4444;
-  color: #fff;
+  color: #ffffff;
   border: none;
-  border-radius: 15px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
 }
 
+.stop-button:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.2);
+}
 
-/* ===== FX ===== */
+/* Host Controls */
+.host-controls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: none; /* Hidden by default, shown only for host */
+}
+
+.settings-btn {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.settings-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  width: 100%;
+  max-height: 85vh;
+  background: #1a1a1a;
+  border-radius: 24px 24px 0 0;
+  padding: 24px;
+  overflow-y: auto;
+  z-index: 1001;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.close-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.close-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
+}
+
+/* Settings Sections */
+.settings-section {
+  margin-bottom: 32px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #aaa;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+/* Timer Controls */
+.timer-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.timer-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.timer-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.4);
+}
+
+.timer-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.4);
+}
+
+.timer-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.timer-input {
+  width: 80px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 12px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.timer-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.timer-unit {
+  font-size: 18px;
+  color: #aaa;
+}
+
+/* Category List */
+.cat-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.select-btn {
+  flex: 1;
+  height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.select-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.98);
+}
+
+.cat-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cat-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cat-item:active {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(0.98);
+}
+
+.cat-item input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  cursor: pointer;
+  accent-color: #4a90e2;
+  flex-shrink: 0;
+}
+
+.cat-name {
+  flex: 1;
+  font-size: 15px;
+  color: #ffffff;
+  text-align: left;
+  user-select: none;
+}
+
+/* Apply Button */
+.apply-btn {
+  width: 100%;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #4a90e2;
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+}
+
+.apply-btn:active {
+  background: #3a7bc8;
+  transform: scale(0.98);
+}
+
+/* Effects */
 html.boomFX, body.boomFX {
   background: #ff0000;
   transition: background 0.5s ease;
@@ -145,55 +475,26 @@ html.end, body.end {
   transition: background 0.5s ease;
 }
 
-/* ===== Picker kategorii – NA DOLE KONTENERA ===== */
-.cat-picker {
-  
-  position: absolute;                    /* w obrębie .container */
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  background: rgba(0,0,0,0.25);
-  padding: 8px 10px;
-  border-radius: 10px;
-  backdrop-filter: blur(4px);
-  z-index: 10;
-  max-width: 92vw;
-  box-sizing: border-box;
+/* Scrollbar styling for category list */
+.cat-list::-webkit-scrollbar {
+  width: 6px;
 }
 
-.cat-picker label {
-  font-size: 12px;
-  opacity: .85;
-  white-space: nowrap;
+.cat-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
 }
 
-.cat-picker select {
-  min-width: 200px;
-  min-height: 110px;      /* wysokość listy dla multiple */
-  font-size: 14px;        /* 16px na iOS powoduje mniejszy auto-zoom, 14px ok dla Android/desktop */
-  border: 1px solid #444;
-  border-radius: 8px;
-  background: #111;
-  color: #fff;
+.cat-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
-.cat-picker select[multiple] {
-  min-width: 200px;
-  min-height: 110px;
+.cat-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
-/* Klasa do chowania pickera po starcie */
-.hidden { display: none !important; }
-
-#catList{
-  color: #00e49c;
-  font-weight: bold;
+/* Hidden utility */
+.hidden {
+  display: none !important;
 }
-#catPicker{
-  background-color: #222222;
-}
-
-

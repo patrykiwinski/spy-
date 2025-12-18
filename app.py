@@ -1,81 +1,123 @@
-import threading, time, random, json
-from pathlib import Path 
+import os
+import threading
+import time
+import random
+import json
+import logging
+from pathlib import Path
+from typing import Optional, Tuple, List, Dict
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 
-app = Flask(__name__)
-socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-TIMER_SECONDS = 30  
+app = Flask(__name__)
+
+# Configure SocketIO async_mode
+# On Render with gunicorn+eventlet, 'threading' mode works fine
+# Can be overridden via SOCKETIO_ASYNC_MODE env var if needed
+async_mode = os.environ.get('SOCKETIO_ASYNC_MODE', 'threading')
+socketio = SocketIO(app, async_mode=async_mode, cors_allowed_origins="*")
+logger.info(f"SocketIO initialized with async_mode: {async_mode}")
+
+# Constants
+DEFAULT_TIMER_SECONDS = 30
+MIN_TIMER_SECONDS = 5
+MAX_TIMER_SECONDS = 900
+MIN_PLAYERS = 2
+
+# Game state
+TIMER_SECONDS = DEFAULT_TIMER_SECONDS
 runda = 0
-players = {}            # {sid: name}
+players: Dict[str, str] = {}  # {sid: name}
 game_started = False
-host_sid = None
+host_sid: Optional[str] = None
 host_name = ""
 stop_flag = False
-timer_thread = None
+timer_thread: Optional[threading.Thread] = None
+game_lock = threading.Lock()  # Thread safety for game state
 
 BASE = Path(__file__).resolve().parent
 
+# Name gender exceptions (for Polish grammar)
+MALE_NAMES_ENDING_A = {"kuba", "kosma", "barnaba", "bonawentura", "ezra", "saba", "misha", "sasha"}
+FEMALE_NAMES_NOT_ENDING_A = {"miriam", "beatrycze", "ingrid", "ester", "noemi", "rachel", "ruth"}
+
+
 def get_forma_dolaczyl(name: str) -> str:
+    """Determine Polish verb form based on name (dołączył/dołączyła)."""
     name_lower = name.lower()
-
-    meskie_na_a = {"kuba", "kosma", "barnaba", "bonawentura", "ezra", "saba", "misha", "sasha"}
-    zenskie_bez_a = {"miriam", "beatrycze", "ingrid", "ester", "noemi", "rachel", "ruth"}
-
-    if (name_lower.endswith("a") and name_lower not in meskie_na_a) or name_lower in zenskie_bez_a:
+    if (name_lower.endswith("a") and name_lower not in MALE_NAMES_ENDING_A) or name_lower in FEMALE_NAMES_NOT_ENDING_A:
         return "dołączyła"
-    else:
-        return "dołączył"
+    return "dołączył"
+
+
+def get_forma_zatrzymal(name: str) -> str:
+    """Determine Polish verb form based on name (zatrzymał/zatrzymała)."""
+    name_lower = name.lower()
+    if (name_lower.endswith("a") and name_lower not in MALE_NAMES_ENDING_A) or name_lower in FEMALE_NAMES_NOT_ENDING_A:
+        return "zatrzymała"
+    return "zatrzymał"
 
 
 
-def load_index_and_data():
-    idx  = json.loads((BASE / "categories_index.json").read_text(encoding="utf-8"))
-    data = json.loads((BASE / "categories_data.json").read_text(encoding="utf-8"))
-    names = [c for c in idx["categories"] if c in data]  # tylko te, dla których mamy hasła
-    return names, data
+def load_index_and_data() -> Tuple[List[str], Dict[str, List[str]]]:
+    """Load categories index and data from JSON files."""
+    try:
+        idx = json.loads((BASE / "categories_index.json").read_text(encoding="utf-8"))
+        data = json.loads((BASE / "categories_data.json").read_text(encoding="utf-8"))
+        names = [c for c in idx.get("categories", []) if c in data]
+        return names, data
+    except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+        logger.error(f"Error loading categories: {e}")
+        return [], {}
 
 CATEGORIES_LIST, CATEGORIES_DATA = load_index_and_data()
-selected_categories = []
+selected_categories: List[str] = []
 
 
 # ---------------- TIMER ----------------
-def run_timer(seconds=None):
-    """Stop stary licznik (jeśli jest) i uruchom nowy."""
+def run_timer(seconds: Optional[int] = None) -> None:
+    """Stop old timer (if exists) and start new one."""
     global stop_flag, timer_thread
-    if seconds is None:
-        seconds = TIMER_SECONDS
+    
+    with game_lock:
+        if seconds is None:
+            seconds = TIMER_SECONDS
+
+        # Stop previous timer
+        if timer_thread and timer_thread.is_alive():
+            stop_flag = True
+            timer_thread.join(timeout=1.0)
+
+        stop_flag = False
+
+        def countdown():
+            global stop_flag
+            for i in range(seconds, -1, -1):
+                if stop_flag:
+                    return
+                socketio.emit("timer", {"time": i})
+                time.sleep(1)
+            socketio.emit("end", {"color": "#ffffff"})
+
+        timer_thread = threading.Thread(target=countdown, daemon=True)
+        timer_thread.start()
+        logger.info(f"Timer started: {seconds}s")
 
 
-    # Zatrzymaj poprzedni licznik
-    if timer_thread and timer_thread.is_alive():
+def stop_timer() -> None:
+    """Stop current timer (if running)."""
+    global stop_flag, timer_thread
+    
+    with game_lock:
         stop_flag = True
-        timer_thread.join()
-
-    stop_flag = False
-
-    def countdown():
-        global stop_flag
-        for i in range(seconds, -1, -1):
-            if stop_flag:
-                return  # zakończ, jeśli zatrzymano
-            socketio.emit("timer", {"time": i})
-            time.sleep(1)
-        socketio.emit("end", {"color": "#ffffff"})
-
-    timer_thread = threading.Thread(target=countdown, daemon=True)
-    timer_thread.start()
-
-
-
-def stop_timer():
-    """Zatrzymaj aktualny licznik (jeśli działa)."""
-    global stop_flag, timer_thread
-    stop_flag = True
-    if timer_thread and timer_thread.is_alive():
-        timer_thread.join()
-    timer_thread = None
+        if timer_thread and timer_thread.is_alive():
+            timer_thread.join(timeout=1.0)
+        timer_thread = None
+        logger.info("Timer stopped")
 
 
 # ---------------- ROUTES ----------------
@@ -88,66 +130,76 @@ def mobi():
 
 # -------------- SOCKET HANDLERS --------------
 
-def pick_category_and_secret():
-    # jeśli chcesz „hot reload” JSON-ów w devie, możesz tu odświeżać:
-    # global CATEGORIES_LIST, CATEGORIES_DATA
-    # CATEGORIES_LIST, CATEGORIES_DATA = load_index_and_data()
-
+def pick_category_and_secret() -> Tuple[str, str]:
+    """Pick random category and secret word from available categories."""
     global selected_categories, CATEGORIES_LIST, CATEGORIES_DATA
 
-    # koszyk do losowania: wybrane kategorie, a jeśli brak – wszystkie
+    # Use selected categories if available, otherwise all categories
     pool = selected_categories if selected_categories else CATEGORIES_LIST
 
-    # (na wszelki wypadek) odfiltruj ewentualne nieistniejące wpisy
+    # Filter out non-existent categories
     pool = [c for c in pool if c in CATEGORIES_DATA]
-    if not pool:  # gdyby ktoś wysłał coś dziwnego
+    if not pool:
         pool = CATEGORIES_LIST
+        if not pool:
+            raise ValueError("No categories available")
 
     cat = random.choice(pool)
-    secret = random.choice(CATEGORIES_DATA[cat])
+    secrets = CATEGORIES_DATA[cat]
+    if not secrets:
+        raise ValueError(f"Category '{cat}' has no secrets")
+    
+    secret = random.choice(secrets)
     return cat, secret
 
 
 @socketio.on("set_category")
-def set_category(data):
+def set_category(data: Dict) -> Dict:
+    """Set selected categories (host only, before game starts)."""
     global selected_categories, host_sid, game_started
 
-    # ⛔ tylko host i tylko przed startem
-    if request.sid != host_sid:
-        emit("error_msg", {"msg": "Tylko host może ustawiać kategorie."}, to=request.sid)
-        return
-    if game_started:
-        emit("error_msg", {"msg": "Nie można zmieniać kategorii w trakcie gry."}, to=request.sid)
-        return
+    with game_lock:
+        # Only host can set categories
+        if request.sid != host_sid:
+            emit("error_msg", {"msg": "Tylko host może ustawiać kategorie."}, to=request.sid)
+            return {}
+        
+        if game_started:
+            emit("error_msg", {"msg": "Nie można zmieniać kategorii w trakcie gry."}, to=request.sid)
+            return {}
 
-    cats = (data or {}).get("categories", [])
-    if not isinstance(cats, list):
-        cats = [cats] if cats else []
+        cats = (data or {}).get("categories", [])
+        if not isinstance(cats, list):
+            cats = [cats] if cats else []
 
-    selected_categories = [c for c in cats if c in CATEGORIES_LIST]
-    label = ", ".join(selected_categories) if selected_categories else "Losowa"
+        selected_categories = [c for c in cats if c in CATEGORIES_LIST]
+        label = ", ".join(selected_categories) if selected_categories else "Losowa"
 
-    print("[SET_CATEGORY]", request.sid, "->", selected_categories)
-    socketio.emit("category_update", {"selected": selected_categories, "label": label})
-    socketio.emit("info", {"msg": f"Kategoria: {label}"})
+        logger.info(f"[SET_CATEGORY] {request.sid} -> {selected_categories}")
+        socketio.emit("category_update", {"selected": selected_categories, "label": label})
+        socketio.emit("info", {"msg": f"Kategoria: {label}"})
 
-    return {"ok": True, "label": label, "selected": selected_categories}
+        return {"ok": True, "label": label, "selected": selected_categories}
 
 @socketio.on("connect")
-def on_connect():
-    label = ", ".join(selected_categories) if selected_categories else "Losowa"
-    emit("category_update", {"selected": selected_categories, "label": label})
-    emit("timer_update", {"seconds": TIMER_SECONDS})
+def on_connect() -> None:
+    """Handle client connection - send current game state."""
+    with game_lock:
+        label = ", ".join(selected_categories) if selected_categories else "Losowa"
+        emit("category_update", {"selected": selected_categories, "label": label})
+        emit("timer_update", {"seconds": TIMER_SECONDS})
+    logger.info(f"Client connected: {request.sid}")
 
 
 
 
     
 @socketio.on("set_timer")
-def set_timer(data):
+def set_timer(data: Dict) -> None:
+    """Set timer duration (host only)."""
     global TIMER_SECONDS
 
-    # tylko host może zmieniać czas
+    # Only host can change timer
     if request.sid != host_sid:
         emit("error_msg", {"msg": "Tylko host może zmienić czas rundy."}, to=request.sid)
         return
@@ -158,167 +210,190 @@ def set_timer(data):
         emit("error_msg", {"msg": "Nieprawidłowa liczba sekund."}, to=request.sid)
         return
 
-    secs = max(5, min(secs, 900))  # 5s–900s (15 minut)
-    TIMER_SECONDS = secs  # ✅ zapisz globalnie!
+    secs = max(MIN_TIMER_SECONDS, min(secs, MAX_TIMER_SECONDS))
+    
+    with game_lock:
+        TIMER_SECONDS = secs
 
-    print(f"[SET_TIMER] {request.sid} ustawił czas na {TIMER_SECONDS}s")
-
+    logger.info(f"[SET_TIMER] {request.sid} set timer to {TIMER_SECONDS}s")
     socketio.emit("timer_update", {"seconds": TIMER_SECONDS})
     socketio.emit("info", {"msg": f"Czas rundy ustawiony na {TIMER_SECONDS} s"})
 
 
 @socketio.on("join")
-def join_game(data):
+def join_game(data: Dict) -> None:
+    """Handle player joining the game."""
     global host_sid, host_name
-    name = data.get("id", "Anonim")
-    players[request.sid] = name
-    forma_dolaczyl = get_forma_dolaczyl(name)
-    if host_sid is None:
-        host_sid = request.sid
-        host_name = name
-        socketio.emit("info", {"msg": f"{host_name} jest hostem i ustawia kategorie."})
-        socketio.emit("info2", {"👑host": host_name})  # 👑 wysyłamy do wszystkich
-    else:
-        # pokaż obecnego hosta nowemu graczowi
-        emit("info2", {"host": host_name}, to=request.sid)
-
-    emit("joined", {"msg": f"Dołączyłeś jako {name}"}, to=request.sid)
-    socketio.emit("info", {"msg": f"Gracz {name} {forma_dolaczyl} do gry. Graczy: {len(players)}"})
-
-@socketio.on("disconnect")
-def on_disconnect():
-    global host_sid, host_name   # <-- DODAJ
-    if request.sid in players:
-        name = players.pop(request.sid)
-        socketio.emit("info", {"msg": f"{name} wyszedł. Graczy: {len(players)}"})
-
-    if request.sid == host_sid:
-        if players:
-            new_sid = next(iter(players.keys()))
-            host_sid = new_sid
-            host_name = players[new_sid]
-            socketio.emit("info", {"msg": f"{host_name} został nowym hostem."})
+    
+    name = (data.get("id", "Anonim") or "Anonim").strip()
+    if not name:
+        name = "Anonim"
+    
+    with game_lock:
+        players[request.sid] = name
+        forma_dolaczyl = get_forma_dolaczyl(name)
+        
+        if host_sid is None:
+            host_sid = request.sid
+            host_name = name
+            socketio.emit("info", {"msg": f"{host_name} jest hostem i ustawia kategorie."})
             socketio.emit("info2", {"host": host_name})
         else:
-            host_sid, host_name = None, ""
-            socketio.emit("info2", {"host": "—"})
+            # Show current host to new player
+            emit("info2", {"host": host_name}, to=request.sid)
+
+        emit("joined", {"msg": f"Dołączyłeś jako {name}"}, to=request.sid)
+        socketio.emit("info", {"msg": f"Gracz {name} {forma_dolaczyl} do gry. Graczy: {len(players)}"})
+        logger.info(f"Player joined: {name} (sid: {request.sid}), total players: {len(players)}")
+
+@socketio.on("disconnect")
+def on_disconnect() -> None:
+    """Handle player disconnection."""
+    global host_sid, host_name
+    
+    with game_lock:
+        if request.sid in players:
+            name = players.pop(request.sid)
+            socketio.emit("info", {"msg": f"{name} wyszedł. Graczy: {len(players)}"})
+            logger.info(f"Player disconnected: {name} (sid: {request.sid}), remaining players: {len(players)}")
+
+        if request.sid == host_sid:
+            if players:
+                new_sid = next(iter(players.keys()))
+                host_sid = new_sid
+                host_name = players[new_sid]
+                socketio.emit("info", {"msg": f"{host_name} został nowym hostem."})
+                socketio.emit("info2", {"host": host_name})
+                logger.info(f"New host assigned: {host_name} (sid: {new_sid})")
+            else:
+                host_sid, host_name = None, ""
+                socketio.emit("info2", {"host": "—"})
+                logger.info("No players remaining, host cleared")
 
 
 
 @socketio.on("start")
-def start_game():
-    """Start gry: tylko host może rozpocząć."""
+def start_game() -> None:
+    """Start game: only host can start."""
     global game_started, runda
 
-    # tylko host może kliknąć start
+    # Only host can start
     if request.sid != host_sid:
         emit("error_msg", {"msg": "Tylko host może rozpocząć grę."}, to=request.sid)
         return
 
-    if len(players) < 2:
-        emit("error_msg", {"msg": "Za mało graczy (min. 2)."}, to=request.sid)
-        return
+    with game_lock:
+        if len(players) < MIN_PLAYERS:
+            emit("error_msg", {"msg": f"Za mało graczy (min. {MIN_PLAYERS})."}, to=request.sid)
+            return
 
-    game_started = True
-    runda = 1
+        game_started = True
+        runda = 1
 
-    pool = selected_categories if selected_categories else CATEGORIES_LIST
-    category = random.choice(pool)
-    secret = random.choice(CATEGORIES_DATA[category])
-    impostor_sid = random.choice(list(players.keys()))
-    run_timer(TIMER_SECONDS)
+        try:
+            category, secret = pick_category_and_secret()
+        except (ValueError, KeyError) as e:
+            logger.error(f"Error picking category/secret: {e}")
+            emit("error_msg", {"msg": "Błąd podczas losowania kategorii."}, to=request.sid)
+            game_started = False
+            return
 
-    print(f"[GAME] Start gry → runda {runda} | kat: {category} | hasło: {secret}")
+        impostor_sid = random.choice(list(players.keys()))
+        logger.info(f"[GAME] Start → runda {runda} | kat: {category} | hasło: {secret} | impostor: {players[impostor_sid]}")
 
-    for sid in players:
-        if sid == impostor_sid:
-            emit("role", {"category": category, "secret": None, "runda": runda}, to=sid)
-        else:
-            emit("role", {"category": category, "secret": secret, "runda": runda}, to=sid)
+        # Send roles to players
+        for sid in players:
+            if sid == impostor_sid:
+                emit("role", {"category": category, "secret": None, "runda": runda}, to=sid)
+            else:
+                emit("role", {"category": category, "secret": secret, "runda": runda}, to=sid)
 
-    socketio.emit("info", {"msg": f"Gra rozpoczęta! Runda {runda}"})
-    run_timer(TIMER_SECONDS)
+        socketio.emit("info", {"msg": f"Gra rozpoczęta! Runda {runda}"})
+        run_timer(TIMER_SECONDS)  # Start timer once
 
 
 
 
 
 @socketio.on("next_round")
-def next_round():
-    """Nowa runda: losowanie (z wybranej lub losowej kategorii), reset timera, runda += 1."""
+def next_round() -> None:
+    """Start next round: pick new category/secret, reset timer, increment round."""
     global runda
 
-    if len(players) < 2:
-        emit("error_msg", {"msg": "Za mało graczy (min. 2)"}, to=request.sid)
-        return
+    with game_lock:
+        if len(players) < MIN_PLAYERS:
+            emit("error_msg", {"msg": f"Za mało graczy (min. {MIN_PLAYERS})"}, to=request.sid)
+            return
 
-    # zatrzymaj poprzedni licznik, żeby nie dublował się z nowym
-    run_timer(TIMER_SECONDS)
+        runda += 1
 
+        try:
+            category, secret = pick_category_and_secret()
+        except (ValueError, KeyError) as e:
+            logger.error(f"Error picking category/secret: {e}")
+            emit("error_msg", {"msg": "Błąd podczas losowania kategorii."}, to=request.sid)
+            runda -= 1  # Rollback round increment
+            return
 
-    runda += 1
+        impostor_sid = random.choice(list(players.keys()))
+        logger.info(f"[GAME] Nowa runda → {runda} | kat: {category} | hasło: {secret} | impostor: {players[impostor_sid]}")
 
-    # użyj helpera z 2-plikowego rozwiązania
-    # (names,data = get_categories() lub CATEGORIES_LIST/CATEGORIES_DATA + selected_category)
-    pool = selected_categories if selected_categories else CATEGORIES_LIST
-    category = random.choice(pool)
-    secret = random.choice(CATEGORIES_DATA[category])
+        # Send roles to players
+        for sid in players:
+            emit(
+                "role",
+                {"category": category, "secret": None if sid == impostor_sid else secret, "runda": runda},
+                to=sid
+            )
 
-    impostor_sid = random.choice(list(players.keys()))
-    print(f"[GAME] Nowa runda → {runda} | kat: {category} | hasło: {secret}")
-
-    for sid in players:
-        emit(
-            "role",
-            {"category": category, "secret": None if sid == impostor_sid else secret, "runda": runda},
-            to=sid
-        )
-
-    socketio.emit("info", {"msg": f"Nowa runda! Runda {runda}"})
-    run_timer()
+        socketio.emit("info", {"msg": f"Nowa runda! Runda {runda}"})
+        run_timer(TIMER_SECONDS)  # Start new timer
 
 
 @socketio.on("pause")
-def pause_game(data):
-    stop_timer()
-    who = data["id"].strip()
-    who_lower = who.lower()
-
-    # wyjątki męskie na -a
-    meskie_na_a = {"kuba", "kosma", "barnaba", "bonawentura", "ezra", "saba", "misha", "sasha"}
-    # wyjątki żeńskie bez -a
-    zenskie_bez_a = {"miriam", "beatrycze", "ingrid", "ester", "noemi", "rachel", "ruth"}
-
-    if (who_lower.endswith("a") and who_lower not in meskie_na_a) or who_lower in zenskie_bez_a:
-        forma = "zatrzymała"
-    else:
-        forma = "zatrzymał"
-
-    socketio.emit("paused", {"msg": f"{who} {forma} zegar"})
-    socketio.emit("boom", {"color": "#ff4444"})  # możesz podać kolor akcentu
+def pause_game(data: Dict) -> None:
+    """Pause the game timer."""
+    try:
+        who = (data.get("id", "") or "").strip()
+        if not who:
+            emit("error_msg", {"msg": "Brak identyfikatora gracza."}, to=request.sid)
+            return
+        
+        stop_timer()
+        forma = get_forma_zatrzymal(who)
+        
+        socketio.emit("paused", {"msg": f"{who} {forma} zegar"})
+        socketio.emit("boom", {"color": "#ff4444"})
+        logger.info(f"Game paused by {who}")
+    except (KeyError, AttributeError) as e:
+        logger.error(f"Error in pause_game: {e}")
+        emit("error_msg", {"msg": "Błąd podczas pauzowania gry."}, to=request.sid)
 
 
 @socketio.on("restart")
-def restart_game():
-    """Reset gry — czyść graczy/rundę, stop timer, czyść UI."""
+def restart_game() -> None:
+    """Reset game — clear players/round, stop timer, clear UI."""
     global game_started, runda, selected_categories, host_sid, host_name
-    stop_timer()
-    game_started = False
-    runda = 0
-    # NIE czyścimy players — jeśli chcesz czyścić, odkomentuj poniżej:
-    players.clear()
-    print("[RESET] Gra zresetowana")
-    socketio.emit("clear", {})
-    selected_categories = []
-    host_sid = None
-    host_name = ""
-    socketio.emit("timer", {"time": ""})
-    socketio.emit("info", {"msg": "Gra zresetowana"})
-    socketio.emit("info2", {"host": "—"})
+    
+    with game_lock:
+        stop_timer()
+        game_started = False
+        runda = 0
+        players.clear()
+        selected_categories = []
+        host_sid = None
+        host_name = ""
+        
+        logger.info("[RESET] Game reset")
+        socketio.emit("clear", {})
+        socketio.emit("timer", {"time": ""})
+        socketio.emit("info", {"msg": "Gra zresetowana"})
+        socketio.emit("info2", {"host": "—"})
 
 
 
 if __name__ == "__main__":
+    logger.info("Starting server on 0.0.0.0:5000")
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
 
 
